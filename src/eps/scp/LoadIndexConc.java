@@ -22,7 +22,7 @@ public class LoadIndexConc implements Runnable {
 
         this.option = option;
         this.indexDirPath = indexDirPath;
-
+    
     }
 
     public LoadIndexConc(int option, File file){
@@ -61,7 +61,7 @@ public class LoadIndexConc implements Runnable {
 
     @Override
     public void run(){
-        //Aqui ficar CountDawnLatch i Phaser
+
         InvertedIndex task = new InvertedIndex();
 
         if(option == 1){
@@ -75,7 +75,7 @@ public class LoadIndexConc implements Runnable {
             setFilesIds(task.getFiles());
 
         }else if(option == 3){
-
+            
             task.loadFilesLines(this.indexDirPath);
             setFilesLines(task.getIndexFilesLines());
 
@@ -84,5 +84,5 @@ public class LoadIndexConc implements Runnable {
         }
 
     }
-
+    
 }

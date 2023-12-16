@@ -8,13 +8,13 @@ public class TaskGetDirectory implements Runnable {
 
     private InvertedIndex hash;
     private  List<File> FilesList;
-
+    
 
 
     //Constructor
     public TaskGetDirectory(InvertedIndex hash){
         this.hash = hash;
-
+        
     }
 
     //seters
@@ -31,12 +31,11 @@ public class TaskGetDirectory implements Runnable {
 
     @Override
     public void run(){
-        // fer un bloqueig, ja sigue en barrerra o en semafor, per a que el fil primari esperi a que el
-        // fil fill torni amb les dades de la ruta del directori
+
         hash.searchDirectoryFiles(hash.getInputDirPath());
 
         setFileList(hash.getFilesList());
-
+          
     }
-
+    
 }

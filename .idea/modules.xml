@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/IndiceInvertidoSecEstadisticas.iml" filepath="$PROJECT_DIR$/IndiceInvertidoSecEstadisticas.iml" />
+      <module fileurl="file://$PROJECT_DIR$/IndiceInvertidoSec.iml" filepath="$PROJECT_DIR$/IndiceInvertidoSec.iml" />
     </modules>
   </component>
 </project>

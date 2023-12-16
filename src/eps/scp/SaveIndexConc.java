@@ -49,8 +49,6 @@ public class SaveIndexConc implements Runnable {
     @Override
     public void run() {
 
-        // Aqui hem de ficar un sincronyzed per guardar els indexos al hashMap GLOBAL
-
         InvertedIndex task = new InvertedIndex();
 
         //Netejar el directori del output

@@ -3,7 +3,8 @@ package eps.scp;
 import java.util.Objects;
 import java.io.Serializable;
 
-public class Location implements Comparable<Location> {
+public class Location implements Comparable<Location>
+{
     private static final long serialVersionUID = 1L;
 
     private int fileId;
@@ -37,7 +38,7 @@ public class Location implements Comparable<Location> {
         if (!(o instanceof Location))
             return false;
         Location tuple = (Location) o;
-        return fileId == tuple.fileId && line == tuple.line;
+        return fileId == tuple.fileId && line==tuple.line;
     }
 
     @Override
@@ -47,7 +48,7 @@ public class Location implements Comparable<Location> {
 
     @Override
     public String toString() {
-        return "(" + fileId + "," + line + ')';
+        return "("+fileId+","+line+')';
     }
 
     @Override

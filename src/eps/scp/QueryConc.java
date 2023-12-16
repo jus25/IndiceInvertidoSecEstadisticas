@@ -12,21 +12,21 @@ public class QueryConc implements Runnable {
     String word;
 
     ConcurrentHashMap<String, HashSet<Location>> globalLoadIndexInvertedMap;
-
+   
 
     //constructor
 
-    public QueryConc(String word, ConcurrentHashMap<String, HashSet<Location>> hash) {
+    public QueryConc(String word, ConcurrentHashMap<String, HashSet<Location>> hash){
 
         this.word = word;
         this.globalLoadIndexInvertedMap = hash;
-
+    
 
     }
-
+    
     //setters
 
-    private void setQueryMatching(Map<Location, Integer> queryMatching) {
+    private void setQueryMatching(Map<Location, Integer> queryMatching){
 
         this.queryMatchings = queryMatching;
 
@@ -34,18 +34,23 @@ public class QueryConc implements Runnable {
 
     //getters
 
-    public Map<Location, Integer> getQueryMatching() {
+    public Map<Location, Integer> getQueryMatching(){
         return this.queryMatchings;
     }
 
 
+
     @Override
-    public void run() {
+    public void run(){
         InvertedIndex task = new InvertedIndex();
         task.setHash(globalLoadIndexInvertedMap);
-        setQueryMatching(task.queryConc(word));
-
+        setQueryMatching(task.queryConc(word));       
+        
     }
 
 
+
+
+
+    
 }

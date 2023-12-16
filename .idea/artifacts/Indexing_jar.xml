@@ -2,7 +2,7 @@
   <artifact type="jar" build-on-make="true" name="Indexing:jar">
     <output-path>$PROJECT_DIR$/out/artifacts/Indexing_jar</output-path>
     <root id="archive" name="Indexing.jar">
-      <element id="module-output" name="IndiceInvertidoSecEstadisticas" />
+      <element id="module-output" name="IndiceInvertidoSec" />
       <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.9/commons-lang3-3.9.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/google/guava/guava/26.0-jre/guava-26.0-jre.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar" path-in-jar="/" />
@@ -12,6 +12,7 @@
       <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/codehaus/mojo/animal-sniffer-annotations/1.14/animal-sniffer-annotations-1.14.jar" path-in-jar="/" />
       <element id="library" level="project" name="com.google.guava:guava:26.0-jre" />
       <element id="library" level="project" name="org.apache.commons:commons-lang3:3.9" />
+      <element id="library" level="project" name="apache.directory.studio.commons.io" />
       <element id="library" level="project" name="junit.jupiter" />
     </root>
   </artifact>
