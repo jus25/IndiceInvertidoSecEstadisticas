@@ -19,6 +19,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CyclicBarrier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -29,6 +30,10 @@ public class Indexing {
     private static final int DKeysByFileIndex = 1000;
     private static int numThreads;
     private static final String DIndexFilePrefix = "IndexFile";
+
+    private static CyclicBarrier[] searchDirectoryFileBarriers = new CyclicBarrier[2];
+
+
 
     public static void main(String[] args) {
         InvertedIndex hash;
@@ -43,7 +48,10 @@ public class Indexing {
         Instant start = Instant.now();
 
         // Obtenció de la llista de fitxers per procesar directoris
-        TaskGetDirectory task = new TaskGetDirectory(hash);
+        int num_threads=1; //numero de threads Obtenció de la llista
+        searchDirectoryFileBarriers[0] = new CyclicBarrier(num_threads + 1);
+        searchDirectoryFileBarriers[1] = new CyclicBarrier(num_threads + 1);
+        TaskGetDirectory task = new TaskGetDirectory(hash,searchDirectoryFileBarriers);
         searchDirectoryFile(task);
         List<File> FilesList = task.getFilesList();
 
@@ -115,13 +123,24 @@ public class Indexing {
         getDirectory.start();
         //Thread getDirectory = Thread.startVirtualThread(task);
 
+
+
         try {
-            getDirectory.join();
+            searchDirectoryFileBarriers[0].await();
+            searchDirectoryFileBarriers[1].await();
         } catch (Exception e) {
             // TODO: handle exception
             System.out.println("Error en la obtenció de la llista de fitxers");
             e.printStackTrace();
         }
+
+        /*try {
+            getDirectory.join();
+        } catch (Exception e) {
+            // TODO: handle exception
+            System.out.println("Error en la obtenció de la llista de fitxers");
+            e.printStackTrace();
+        }*/
 
     }
 
