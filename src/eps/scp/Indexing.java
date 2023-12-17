@@ -109,7 +109,11 @@ public class Indexing {
 
     public static void searchDirectoryFile(TaskGetDirectory task) {
 
-        Thread getDirectory = Thread.startVirtualThread(task);
+
+
+        Thread getDirectory = new Thread(task);
+        getDirectory.start();
+        //Thread getDirectory = Thread.startVirtualThread(task);
 
         try {
             getDirectory.join();
@@ -132,9 +136,11 @@ public class Indexing {
             List<File> newFilesList = new ArrayList<>();
             newFilesList.add(file);
             taskGetIndexForFile taskFile = new taskGetIndexForFile(newFilesList, FileId);
-            Thread thread = Thread.startVirtualThread(taskFile);
 
+            Thread thread = new Thread(taskFile);
+            //Thread thread = Thread.startVirtualThread(taskFile);
             invertedIndexfile[FileId] = thread;
+            thread.start();
             tasks[FileId] = taskFile;
 
             FileId++;
@@ -208,7 +214,9 @@ public class Indexing {
         // guardarà el index invertit
 
         SaveIndexConc cleanDirectory = new SaveIndexConc(1, indexPath);
-        Thread threadCleanDirectory = Thread.startVirtualThread(cleanDirectory);
+        Thread threadCleanDirectory = new Thread(cleanDirectory);
+        threadCleanDirectory.start();
+        //Thread threadCleanDirectory = Thread.startVirtualThread(cleanDirectory);
 
         try {
 
@@ -224,14 +232,20 @@ public class Indexing {
 
         SaveIndexConc FilesIds = new SaveIndexConc(3, indexPath, globalIndexFilesLines, GlobalFiles,
                 globalIndexInvertedMap);
-        Thread threadFilesIds = Thread.startVirtualThread(FilesIds);
+
+        Thread threadFilesIds = new Thread(FilesIds);
+        threadFilesIds.start();
+        //Thread threadFilesIds = Thread.startVirtualThread(FilesIds);
 
         // Aquest fil es la que s'encarrega de crear l'arxiu que contindrà les linies de
         // tots els fitxers indexades per numero y documents de tots els fitxers en un
         // sol arixu
         SaveIndexConc saveFilesLines = new SaveIndexConc(4, indexPath, globalIndexFilesLines, GlobalFiles,
                 globalIndexInvertedMap);
-        Thread threadSaveFilesLines = Thread.startVirtualThread(saveFilesLines);
+
+        Thread threadSaveFilesLines = new Thread(saveFilesLines);
+        threadSaveFilesLines.start();
+        //Thread threadSaveFilesLines = Thread.startVirtualThread(saveFilesLines);
 
         // Aquesta funció s'encarrega de guardar en un arxiu el index invertit
         saveInvertedIndex(indexPath, globalIndexInvertedMap);
@@ -265,8 +279,11 @@ public class Indexing {
             end += keysByFile;
 
             SaveIndexConc saveInvertedIndex = new SaveIndexConc(2, indexPath, newGlobalHash, begin, end, numFile);
-            Thread threadSaveInvertedIndex = Thread.startVirtualThread(saveInvertedIndex);
+
+            Thread threadSaveInvertedIndex = new Thread(saveInvertedIndex);
+            //Thread threadSaveInvertedIndex = Thread.startVirtualThread(saveInvertedIndex);
             threads[i] = threadSaveInvertedIndex;
+            threadSaveInvertedIndex.start();
 
             begin = end;
             remainingFiles -= 1;
@@ -318,8 +335,14 @@ public class Indexing {
         LoadIndexConc loadFilesIds = new LoadIndexConc(2, indexDirPath);
         LoadIndexConc loadFilesLines = new LoadIndexConc(3, indexDirPath);
 
-        Thread threadFilesIds = Thread.startVirtualThread(loadFilesIds);
-        Thread threadFilesLines = Thread.startVirtualThread(loadFilesLines);
+        Thread threadFilesIds = new Thread(loadFilesIds);
+        threadFilesIds.start();
+
+        Thread threadFilesLines = new Thread(loadFilesLines);
+        threadFilesLines.start();
+
+        //Thread threadFilesIds = Thread.startVirtualThread(loadFilesIds);
+        //Thread threadFilesLines = Thread.startVirtualThread(loadFilesLines);
 
         loadInvertedIndex(globalLoadIndexInvertedMap, indexDirPath);
 
@@ -353,8 +376,12 @@ public class Indexing {
             if (file.isFile()) {
 
                 LoadIndexConc loadInvertedIndex = new LoadIndexConc(1, file);
-                Thread threadLoadInvertedIndex = Thread.startVirtualThread(loadInvertedIndex);
+                
+                Thread threadLoadInvertedIndex = new Thread(loadInvertedIndex);
+                //Thread threadLoadInvertedIndex = Thread.startVirtualThread(loadInvertedIndex);
                 threads[i] = threadLoadInvertedIndex;
+                threadLoadInvertedIndex.start();
+                
                 loadInvertedIndexArray[i] = loadInvertedIndex;
                 i++;
             }
