@@ -6,16 +6,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.CountDownLatch;
 
 public class taskGetIndexForFile implements Runnable {
-
+    CountDownLatch latch;
     private List<File> FilesList;
     private int FileId;
     public Map<String, HashSet<Location>> Hash;
     private Map<Integer,String> Files;
     private Map<Location, String> IndexFilesLines;
-    
-    
+
+
     //constructor
 
     public taskGetIndexForFile(List<File> FilesList, int fileId){
@@ -63,8 +64,12 @@ public class taskGetIndexForFile implements Runnable {
         setHasMap(getIndex.getHash());
         setFiles(getIndex.getFiles());
         setIndexFilesLines(getIndex.getIndexFilesLines());
+        if (latch != null) latch.countDown();
        
         
     }
-    
+
+    public void setLatch(CountDownLatch latch) {
+        this.latch=latch;
+    }
 }

@@ -19,7 +19,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Semaphore;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -32,8 +34,9 @@ public class Indexing {
     private static final String DIndexFilePrefix = "IndexFile";
 
     private static CyclicBarrier[] searchDirectoryFileBarriers = new CyclicBarrier[2];
-
-
+    private static CountDownLatch latch;
+    /*
+* load, save, directory, get index*/
 
     public static void main(String[] args) {
         InvertedIndex hash;
@@ -59,6 +62,8 @@ public class Indexing {
         Thread[] invertedIndexfile = new Thread[FilesList.size()];
         taskGetIndexForFile[] tasks = new taskGetIndexForFile[FilesList.size()];
         getForFileIndexInverted(task, invertedIndexfile, tasks);
+
+
 
         // Es junten tots els index invertits de cada fitxer en un sol index
         ConcurrentHashMap<String, HashSet<Location>> globalIndexInvertedMap = new ConcurrentHashMap<>();
@@ -147,6 +152,9 @@ public class Indexing {
     public static void getForFileIndexInverted(TaskGetDirectory task, Thread[] invertedIndexfile,
                                                taskGetIndexForFile[] tasks) {
 
+        latch = new CountDownLatch(invertedIndexfile.length);
+
+
         List<File> FilesList = task.getFilesList();
 
         int FileId = 0;
@@ -160,21 +168,31 @@ public class Indexing {
             //Thread thread = Thread.startVirtualThread(taskFile);
             invertedIndexfile[FileId] = thread;
             thread.start();
+            taskFile.setLatch(latch);
             tasks[FileId] = taskFile;
 
             FileId++;
         }
     }
 
+    private static final Semaphore semaphore = new Semaphore(1);
+
     public static void joinIndecesOnGlobalMap(ConcurrentHashMap<String, HashSet<Location>> globalIndexInvertedMap,
                                               Thread[] invertedIndexfile, taskGetIndexForFile[] tasks) {
 
-        for (int i = 0; i < invertedIndexfile.length; i++) {
-            try {
-                invertedIndexfile[i].join();
-                Map<String, HashSet<Location>> Hash = tasks[i].getHashMap();
 
-                for (String keyString : Hash.keySet()) {
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        for (int i = 0; i < invertedIndexfile.length; i++) {
+            Map<String, HashSet<Location>> Hash = tasks[i].getHashMap();
+
+            for (String keyString : Hash.keySet()) {
+                try {
+                    semaphore.acquire(); // Adquirir el semáforo antes de la operación crítica
 
                     if (globalIndexInvertedMap.containsKey(keyString)) {
                         HashSet<Location> locations = globalIndexInvertedMap.get(keyString);
@@ -183,15 +201,42 @@ public class Indexing {
                     } else {
                         globalIndexInvertedMap.put(keyString, Hash.get(keyString));
                     }
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    semaphore.release(); // Liberar el semáforo después de la operación crítica
+                }
+            }
+        }
 
+
+       /* for (int i = 0; i < invertedIndexfile.length; i++) {
+            try {
+                invertedIndexfile[i].join();
+                Map<String, HashSet<Location>> Hash = tasks[i].getHashMap();
+
+                for (String keyString : Hash.keySet()) {
+                    try {
+                        semaphore.acquire(); // Adquirir el semáforo antes de la operación crítica
+
+                        if (globalIndexInvertedMap.containsKey(keyString)) {
+                            HashSet<Location> locations = globalIndexInvertedMap.get(keyString);
+                            HashSet<Location> newLocation = Hash.get(keyString);
+                            locations.addAll(newLocation);
+                        } else {
+                            globalIndexInvertedMap.put(keyString, Hash.get(keyString));
+                        }
+                    } finally {
+                        semaphore.release(); // Liberar el semáforo después de la operación crítica
+                    }
                 }
             } catch (Exception e) {
-                // TODO: handle exception
                 System.out.println("Error en la obtenció de la llista de fitxers");
                 e.printStackTrace();
             }
+        }*/
 
-        }
+
     }
 
     public static void joinFiles(taskGetIndexForFile[] tasks, ConcurrentHashMap<Integer, String> GlobalFiles) {
