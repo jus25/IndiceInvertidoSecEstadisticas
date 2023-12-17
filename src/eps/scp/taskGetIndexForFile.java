@@ -64,7 +64,7 @@ public class taskGetIndexForFile implements Runnable {
         setHasMap(getIndex.getHash());
         setFiles(getIndex.getFiles());
         setIndexFilesLines(getIndex.getIndexFilesLines());
-        if (latch != null) latch.countDown();
+        latch.countDown();
        
         
     }
