@@ -55,6 +55,7 @@ public class InvertedIndex {
     private Map<String, HashSet<Location>> Hash = new TreeMap<String, HashSet<Location>>();
 
     // Estadisticas para verificar la correcta contrucción del indice invertido.
+    private final Statistics GlobalStatistics = new Statistics("=");
     private long TotalLocations = 0;
     private long TotalWords = 0;
     private long TotalLines = 0;
@@ -232,6 +233,10 @@ public class InvertedIndex {
             // fichero
             addFileWords2Index(fileId, file); // Procesamos el fichero y añadimos sus palabras al indice invertido.
         }
+        String maxWord = Collections.max(Hash.entrySet(), (entry1, entry2) -> entry1.getValue().size() - entry2.getValue().size()).getKey();
+        GlobalStatistics.setMostPopularWord(maxWord);
+        GlobalStatistics.setMostPopularWordLocations(Hash.get(maxWord).size());
+        GlobalStatistics.print("Global");
     }
 
     // Método para incorporar las palabras de un fichero de texto al indice
@@ -252,8 +257,10 @@ public class InvertedIndex {
     // mediante su localización
     // (idFile,Linea)
     public void addFileWords2Index(int fileId, File file) {
-        System.out.printf("Processing %3dth file %s\n", fileId, file.getName());
+        Statistics FileStatistics = new Statistics("_");
+        System.out.printf("Processing %3dth file %s (Path: %s)\n", fileId, file.getName(), file.getAbsolutePath());
         TotalProcessedFiles++;
+        FileStatistics.incProcessingFiles();
 
         // Crear buffer reader para leer el fichero a procesar.
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
@@ -263,6 +270,7 @@ public class InvertedIndex {
             {
                 lineNumber++;
                 TotalLines++;
+                FileStatistics.incProcessedLines();
                 if (Indexing.Verbose)
                     System.out.printf("Procesando linea %d fichero %d: ", lineNumber, fileId);
                 Location newLocation = new Location(fileId, lineNumber);
@@ -284,8 +292,11 @@ public class InvertedIndex {
                     if (locations == null) { // Si no existe esa palabra en el indice invertido, creamos una lista vacía
                         // de Localizaciones y la añadimos al Indice
                         locations = new HashSet<Location>();
+                        if (!Hash.containsKey(word))
+                            FileStatistics.incKeysFound();
                         Hash.put(word, locations);
                         TotalWords++;
+                        FileStatistics.incProcessedWords();
                     }
                     // Añadimos nueva localización en la lista de localizaciomes asocidada con ella.
                     int oldLocSize = locations.size();
@@ -303,6 +314,18 @@ public class InvertedIndex {
             System.err.printf("Error lectura fichero %s.\n", file.getAbsolutePath());
             e.printStackTrace();
         }
+        FileStatistics.incProcessedFiles();
+        FileStatistics.decProcessingFiles();
+        setMostPopularWord(FileStatistics);
+        FileStatistics.print(file.getName());
+
+        GlobalStatistics.addStatistics(FileStatistics);
+    }
+
+    public void setMostPopularWord(Statistics stats) {
+        String maxWord = Collections.max(Hash.entrySet(), (entry1, entry2) -> entry1.getValue().size() - entry2.getValue().size()).getKey();
+        stats.setMostPopularWord(maxWord);
+        stats.setMostPopularWordLocations(Hash.get(maxWord).size());
     }
 
     // Verificar si la extensión del fichero coincide con la extensiones buscadas

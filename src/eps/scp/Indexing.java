@@ -9,9 +9,6 @@ NIF i Nombre completo autor3. Y7426280P Samer Yousef Qaid , Saeed
 --------------------------------------------------------------- */
 
 
-
-
-
 package eps.scp;
 
 import java.io.File;
@@ -23,6 +20,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Semaphore;
 
+import static eps.scp.Statistics.color_blue;
+import static eps.scp.Statistics.color_green;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class Indexing {
@@ -37,7 +36,7 @@ public class Indexing {
     private static CountDownLatch latch;
     private static CountDownLatch latch2;
     /*
-* load, save, directory, get index*/
+     * load, save, directory, get index*/
 
     public static void main(String[] args) {
         InvertedIndex hash;
@@ -51,44 +50,45 @@ public class Indexing {
 
         Instant start = Instant.now();
 
+        Statistics stats = new Statistics(color_blue);
+
         // Obtenció de la llista de fitxers per procesar directoris
-        int num_threads=1; //numero de threads Obtenció de la llista
+        int num_threads = 1; //numero de threads
         searchDirectoryFileBarriers[0] = new CyclicBarrier(num_threads + 1);
         searchDirectoryFileBarriers[1] = new CyclicBarrier(num_threads + 1);
-        TaskGetDirectory task = new TaskGetDirectory(hash,searchDirectoryFileBarriers);
+        TaskGetDirectory task = new TaskGetDirectory(hash, searchDirectoryFileBarriers);
         searchDirectoryFile(task);
         List<File> FilesList = task.getFilesList();
 
-        // S'obté el index invertit de cada fitxer
+        // Obtencio del index invertit
         Thread[] invertedIndexfile = new Thread[FilesList.size()];
         taskGetIndexForFile[] tasks = new taskGetIndexForFile[FilesList.size()];
         getForFileIndexInverted(task, invertedIndexfile, tasks);
 
 
-
-        // Es junten tots els index invertits de cada fitxer en un sol index
+        // Juntar tots els index invertits en un mateix fitxer
         ConcurrentHashMap<String, HashSet<Location>> globalIndexInvertedMap = new ConcurrentHashMap<>();
         joinIndecesOnGlobalMap(globalIndexInvertedMap, invertedIndexfile, tasks);
         // printConcurrentHashMap(globalIndexInvertedMap);
 
-        // Es reconstrueix unin tots els Files obtinguts en les execucions dels fils
+        // Reconstrucció unin tots els Files obtinguts pels fils
         ConcurrentHashMap<Integer, String> GlobalFiles = new ConcurrentHashMap<>();
         joinFiles(tasks, GlobalFiles);
 
-        // Es reconstrueix unin tots els FilesLines obtinguts en les execucions els fils
+        // Reconstrucció unin tots els FilesLines obtinguts pels fils
         TreeMap<Location, String> globalIndexFilesLines = new TreeMap<>();
         joinIndexFilesLines(tasks, globalIndexFilesLines);
 
-        // Iniciem el proces del guardat del index invertit
+        // Guardar del index invertit
         saveIndex(args[1], GlobalFiles, globalIndexFilesLines, globalIndexInvertedMap);
 
-        // Iniciem el proces de carregat del index invertit
+        // Carregar del index invertit
 
         ConcurrentHashMap<String, HashSet<Location>> globalLoadIndexInvertedMap = new ConcurrentHashMap<>();
         Map<Integer, String> globalLoadFiles = new ConcurrentHashMap<>();
         TreeMap<Location, String> globalLoadIndexFilesLines = new TreeMap<>();
 
-        //final
+        //Fi
         loadIndex(args[1], globalLoadIndexInvertedMap, globalLoadFiles, globalLoadIndexFilesLines);
 
 
@@ -102,6 +102,7 @@ public class Indexing {
             System.out.println(hash.ANSI_RED + e.getMessage() + " " + hash.ANSI_RESET);
         }
 
+        stats.print("Final Statistics");
 
         Instant finish = Instant.now();
         long timeElapsed = Duration.between(start, finish).toMillis(); // in millis
@@ -123,7 +124,6 @@ public class Indexing {
     }
 
     public static void searchDirectoryFile(TaskGetDirectory task) {
-
 
 
         Thread getDirectory = new Thread(task);
@@ -312,7 +312,7 @@ public class Indexing {
 
         // esperem que acabi la execució dels fils
         try {
-            threadFilesIds.join();
+            threadFilesIds.join();// canviar aixo
             threadSaveFilesLines.join();
         } catch (Exception e) {
             System.out.println("Error en el salvat del invertedIndex Op.1 Op.3 Op.4");
@@ -352,7 +352,7 @@ public class Indexing {
 
         for (int i = 0; i < numThreads; i++) {
             try {
-                threads[i].join();
+                threads[i].join(); // canviar aixo
             } catch (Exception e) {
                 System.out.println("Error en salvat del InvertedIndex Op.2");
                 e.printStackTrace();
@@ -383,6 +383,7 @@ public class Indexing {
 
         return new ArrayList<>(globalHash.entrySet());
     }
+
     //latch??
     public static void loadIndex(String indexDirPath,
                                  ConcurrentHashMap<String, HashSet<Location>> globalLoadIndexInvertedMap,
@@ -391,7 +392,6 @@ public class Indexing {
 
         CountDownLatch latchOp2 = new CountDownLatch(1);
         CountDownLatch latchOp3 = new CountDownLatch(1);
-
 
 
         // Es carrega el index files id i el files lines a memoria
@@ -407,7 +407,7 @@ public class Indexing {
         Thread threadFilesLines = new Thread(loadFilesLines);
         threadFilesLines.start();
 
-;
+        ;
 
         loadInvertedIndex(globalLoadIndexInvertedMap, indexDirPath);
 
@@ -445,12 +445,12 @@ public class Indexing {
             if (file.isFile()) {
 
                 LoadIndexConc loadInvertedIndex = new LoadIndexConc(1, file);
-                
+
                 Thread threadLoadInvertedIndex = new Thread(loadInvertedIndex);
                 threads[i] = threadLoadInvertedIndex;
                 threadLoadInvertedIndex.start();
                 loadInvertedIndex.setLatch(latch2);
-                
+
                 loadInvertedIndexArray[i] = loadInvertedIndex;
                 i++;
             }
