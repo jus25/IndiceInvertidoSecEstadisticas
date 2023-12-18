@@ -35,8 +35,8 @@ public class Indexing {
     private static CyclicBarrier[] searchDirectoryFileBarriers = new CyclicBarrier[2];
     private static CountDownLatch latch;
     private static CountDownLatch latch2;
-    /*
-     * load, save, directory, get index*/
+
+    public static  ThreadSafePrint threadSafePrint= new ThreadSafePrint();
 
     public static void main(String[] args) {
         InvertedIndex hash;

@@ -158,11 +158,21 @@ public class Statistics {
     }
 
     public void print(String name) {
-        System.out.print(color_blue);
-        System.out.println(StringUtils.repeat(c, CLineHeaderSize) + " " + name + " " + StringUtils.repeat(c, CLineSize - (CLineHeaderSize + name.length() + 2)));
-        print();
-        System.out.println(StringUtils.repeat(c, CLineSize));
-        System.out.print(end_color);
+
+        String message= color_blue +
+                StringUtils.repeat(c, CLineHeaderSize) + " " + name + " " + StringUtils.repeat(c, CLineSize - (CLineHeaderSize + name.length() + 2)) +"\n"+
+                sprint() + "\n"+
+                StringUtils.repeat(c, CLineSize) +
+                end_color;
+        //System.out.print(color_blue);
+        //System.out.println(StringUtils.repeat(c, CLineHeaderSize) + " " + name + " " + StringUtils.repeat(c, CLineSize - (CLineHeaderSize + name.length() + 2)));
+        //print();
+        //System.out.println(StringUtils.repeat(c, CLineSize));
+        //System.out.print(end_color);
+
+        Indexing.threadSafePrint.print(message);
+        Indexing.threadSafePrint.flush();
+
 
     }
 
@@ -177,5 +187,23 @@ public class Statistics {
         System.out.printf(StringUtils.repeat(c, CLineHeaderSize) + " Most Popular word: %-" + CFieldSize + "s", getMostPopularWord());
         System.out.printf(StringUtils.repeat(c, CLineHeaderSize) + " Locations:       %-" + CFieldSize + "d", getMostPopularWordLocations());
         System.out.println(StringUtils.repeat(c, CLineHeaderSize));
+    }
+    public String sprint(){
+        return  StringUtils.repeat(c, CLineHeaderSize) +
+                " Processed Files:      " + getProcessedFiles() +
+                StringUtils.repeat(c, CLineHeaderSize) +
+                " Processing Files: " + getProcessingFiles() +
+                StringUtils.repeat(c, CLineHeaderSize) +
+                " Processed Lines:    " + getProcessedLines() +
+                StringUtils.repeat(c, CLineHeaderSize) +
+                " Processed Words:   " + getProcessedWords() +
+                StringUtils.repeat(c, CLineHeaderSize) +"\n"+
+                " Processed Locations: " + getProcessedLocations() +
+                StringUtils.repeat(c, CLineHeaderSize) +
+                " Found Keys:        " + getKeysFound() +
+                StringUtils.repeat(c, CLineHeaderSize) +
+                " Most Popular word: " + getMostPopularWord() +
+                StringUtils.repeat(c, CLineHeaderSize) +
+                " Locations:        " + getMostPopularWordLocations();
     }
 }
