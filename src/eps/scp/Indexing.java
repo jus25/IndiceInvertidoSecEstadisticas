@@ -139,13 +139,6 @@ public class Indexing {
             e.printStackTrace();
         }
 
-        /*try {
-            getDirectory.join__();
-        } catch (Exception e) {
-            // TODO: handle exception
-            System.out.println("Error en la obtenció de la llista de fitxers");
-            e.printStackTrace();
-        }*/
 
     }
 
@@ -209,33 +202,6 @@ public class Indexing {
         }
 
 
-       /* for (int i = 0; i < invertedIndexfile.length; i++) {
-            try {
-                invertedIndexfile[i].join__();
-                Map<String, HashSet<Location>> Hash = tasks[i].getHashMap();
-
-                for (String keyString : Hash.keySet()) {
-                    try {
-                        semaphore.acquire(); // Adquirir el semáforo antes de la operación crítica
-
-                        if (globalIndexInvertedMap.containsKey(keyString)) {
-                            HashSet<Location> locations = globalIndexInvertedMap.get(keyString);
-                            HashSet<Location> newLocation = Hash.get(keyString);
-                            locations.addAll(newLocation);
-                        } else {
-                            globalIndexInvertedMap.put(keyString, Hash.get(keyString));
-                        }
-                    } finally {
-                        semaphore.release(); // Liberar el semáforo después de la operación crítica
-                    }
-                }
-            } catch (Exception e) {
-                System.out.println("Error en la obtenció de la llista de fitxers");
-                e.printStackTrace();
-            }
-        }*/
-
-
     }
 
     public static void joinFiles(taskGetIndexForFile[] tasks, ConcurrentHashMap<Integer, String> GlobalFiles) {
@@ -276,13 +242,14 @@ public class Indexing {
         // S'inicia el proces de netejar el directori especificat per l'usuari on es
         // guardarà el index invertit
 
+        CountDownLatch cleanDirectoryLatch = new CountDownLatch(1);
         SaveIndexConc cleanDirectory = new SaveIndexConc(1, indexPath);
+        cleanDirectory.setLatch(cleanDirectoryLatch);
         Thread threadCleanDirectory = new Thread(cleanDirectory);
         threadCleanDirectory.start();
 
         try {
-
-            threadCleanDirectory.join();
+            cleanDirectoryLatch.await();
 
         } catch (Exception e) {
             System.out.println("Error en la neteja del directori");
@@ -294,6 +261,8 @@ public class Indexing {
 
         SaveIndexConc FilesIds = new SaveIndexConc(3, indexPath, globalIndexFilesLines, GlobalFiles,
                 globalIndexInvertedMap);
+        CountDownLatch filesIdsLatch = new CountDownLatch(1);
+        FilesIds.setLatch(filesIdsLatch);
 
         Thread threadFilesIds = new Thread(FilesIds);
         threadFilesIds.start();
@@ -303,6 +272,8 @@ public class Indexing {
         // sol arixu
         SaveIndexConc saveFilesLines = new SaveIndexConc(4, indexPath, globalIndexFilesLines, GlobalFiles,
                 globalIndexInvertedMap);
+        CountDownLatch saveFilesLinesLatch = new CountDownLatch(1);
+        saveFilesLines.setLatch(saveFilesLinesLatch);
 
         Thread threadSaveFilesLines = new Thread(saveFilesLines);
         threadSaveFilesLines.start();
@@ -312,8 +283,8 @@ public class Indexing {
 
         // esperem que acabi la execució dels fils
         try {
-            threadFilesIds.join();// canviar aixo
-            threadSaveFilesLines.join();
+            filesIdsLatch.await();
+            saveFilesLinesLatch.await();
         } catch (Exception e) {
             System.out.println("Error en el salvat del invertedIndex Op.1 Op.3 Op.4");
             e.printStackTrace();
@@ -323,8 +294,10 @@ public class Indexing {
     public static void saveInvertedIndex(String indexPath,
                                          ConcurrentHashMap<String, HashSet<Location>> globalIndexInvertedMap) {
 
+        
         List<Map.Entry<String, HashSet<Location>>> newGlobalHash = hashToList(globalIndexInvertedMap);
         numThreads = getNumFiles(globalIndexInvertedMap);
+        CountDownLatch saveInvertedIndexLatch = new CountDownLatch(numThreads);
         Thread[] threads = new Thread[numThreads];
         int remainingFiles, numFile = 0;
         long remainingKeys, keysByFile, end = 0, begin = 0;
@@ -342,6 +315,7 @@ public class Indexing {
 
             Thread threadSaveInvertedIndex = new Thread(saveInvertedIndex);
             threads[i] = threadSaveInvertedIndex;
+            saveInvertedIndex.setLatch(saveInvertedIndexLatch);
             threadSaveInvertedIndex.start();
 
             begin = end;
@@ -350,15 +324,14 @@ public class Indexing {
 
         }
 
-        for (int i = 0; i < numThreads; i++) {
-            try {
-                threads[i].join(); // canviar aixo
-            } catch (Exception e) {
-                System.out.println("Error en salvat del InvertedIndex Op.2");
-                e.printStackTrace();
-            }
-
+        try{
+            saveInvertedIndexLatch.await();
+        }catch (Exception e) {
+            System.out.println("Error en salvat del InvertedIndex Op.2");
+            e.printStackTrace();
         }
+
+
 
     }
 
@@ -394,6 +367,7 @@ public class Indexing {
         CountDownLatch latchOp3 = new CountDownLatch(1);
 
 
+
         // Es carrega el index files id i el files lines a memoria
 
         LoadIndexConc loadFilesIds = new LoadIndexConc(2, indexDirPath);
@@ -412,8 +386,6 @@ public class Indexing {
         loadInvertedIndex(globalLoadIndexInvertedMap, indexDirPath);
 
         try {
-            ///threadFilesIds.join();
-            //threadFilesLines.join();
             latchOp2.await();
             latchOp3.await();
 
@@ -456,15 +428,13 @@ public class Indexing {
             }
         }
 
-        for (int j = 0; j < listOfFiles.length; j++) {
             try {
-                threads[j].join();
-
+                latch2.await();
             } catch (Exception e) {
                 System.out.println("Error en el cargat del InvertedIndex Op.2");
                 e.printStackTrace();
             }
-        }
+        //}
 
         for (i = 0; i < loadInvertedIndexArray.length; i++) {
 

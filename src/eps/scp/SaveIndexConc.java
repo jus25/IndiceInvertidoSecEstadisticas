@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 
 public class SaveIndexConc implements Runnable {
 
@@ -17,7 +18,7 @@ public class SaveIndexConc implements Runnable {
     private List<Map.Entry<String, HashSet<Location>>> listHash;
     private long begin;
     private long end;
-
+    CountDownLatch latch;
 
     //Constructors de la clase
 
@@ -78,7 +79,13 @@ public class SaveIndexConc implements Runnable {
         } else {
             System.out.println("This option is not correct");
         }
+        if (latch != null) {
+            this.latch.countDown();
+        }
     }
 
 
+    public void setLatch(CountDownLatch saveInvertedIndexLatch) {
+        this.latch=saveInvertedIndexLatch;
+    }
 }
