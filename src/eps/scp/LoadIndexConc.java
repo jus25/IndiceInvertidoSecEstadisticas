@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 
 public class LoadIndexConc implements Runnable {
 
@@ -57,7 +58,7 @@ public class LoadIndexConc implements Runnable {
         return this.Hash;
     }
 
-
+    CountDownLatch latch;
 
     @Override
     public void run(){
@@ -83,6 +84,13 @@ public class LoadIndexConc implements Runnable {
             System.out.println("This option does not exisist");
         }
 
+        if (this.latch != null) {
+            this.latch.countDown();
+        }
+
     }
-    
+
+    public void setLatch(CountDownLatch latch) {
+        this.latch=latch;
+    }
 }

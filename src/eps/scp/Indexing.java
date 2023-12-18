@@ -35,6 +35,7 @@ public class Indexing {
 
     private static CyclicBarrier[] searchDirectoryFileBarriers = new CyclicBarrier[2];
     private static CountDownLatch latch;
+    private static CountDownLatch latch2;
     /*
 * load, save, directory, get index*/
 
@@ -87,6 +88,7 @@ public class Indexing {
         Map<Integer, String> globalLoadFiles = new ConcurrentHashMap<>();
         TreeMap<Location, String> globalLoadIndexFilesLines = new TreeMap<>();
 
+        //final
         loadIndex(args[1], globalLoadIndexInvertedMap, globalLoadFiles, globalLoadIndexFilesLines);
 
 
@@ -126,8 +128,6 @@ public class Indexing {
 
         Thread getDirectory = new Thread(task);
         getDirectory.start();
-        //Thread getDirectory = Thread.startVirtualThread(task);
-
 
 
         try {
@@ -140,7 +140,7 @@ public class Indexing {
         }
 
         /*try {
-            getDirectory.join();
+            getDirectory.join__();
         } catch (Exception e) {
             // TODO: handle exception
             System.out.println("Error en la obtenció de la llista de fitxers");
@@ -165,7 +165,6 @@ public class Indexing {
             taskGetIndexForFile taskFile = new taskGetIndexForFile(newFilesList, FileId);
 
             Thread thread = new Thread(taskFile);
-            //Thread thread = Thread.startVirtualThread(taskFile);
             invertedIndexfile[FileId] = thread;
             thread.start();
             taskFile.setLatch(latch);
@@ -212,7 +211,7 @@ public class Indexing {
 
        /* for (int i = 0; i < invertedIndexfile.length; i++) {
             try {
-                invertedIndexfile[i].join();
+                invertedIndexfile[i].join__();
                 Map<String, HashSet<Location>> Hash = tasks[i].getHashMap();
 
                 for (String keyString : Hash.keySet()) {
@@ -280,7 +279,6 @@ public class Indexing {
         SaveIndexConc cleanDirectory = new SaveIndexConc(1, indexPath);
         Thread threadCleanDirectory = new Thread(cleanDirectory);
         threadCleanDirectory.start();
-        //Thread threadCleanDirectory = Thread.startVirtualThread(cleanDirectory);
 
         try {
 
@@ -299,7 +297,6 @@ public class Indexing {
 
         Thread threadFilesIds = new Thread(FilesIds);
         threadFilesIds.start();
-        //Thread threadFilesIds = Thread.startVirtualThread(FilesIds);
 
         // Aquest fil es la que s'encarrega de crear l'arxiu que contindrà les linies de
         // tots els fitxers indexades per numero y documents de tots els fitxers en un
@@ -309,7 +306,6 @@ public class Indexing {
 
         Thread threadSaveFilesLines = new Thread(saveFilesLines);
         threadSaveFilesLines.start();
-        //Thread threadSaveFilesLines = Thread.startVirtualThread(saveFilesLines);
 
         // Aquesta funció s'encarrega de guardar en un arxiu el index invertit
         saveInvertedIndex(indexPath, globalIndexInvertedMap);
@@ -345,7 +341,6 @@ public class Indexing {
             SaveIndexConc saveInvertedIndex = new SaveIndexConc(2, indexPath, newGlobalHash, begin, end, numFile);
 
             Thread threadSaveInvertedIndex = new Thread(saveInvertedIndex);
-            //Thread threadSaveInvertedIndex = Thread.startVirtualThread(saveInvertedIndex);
             threads[i] = threadSaveInvertedIndex;
             threadSaveInvertedIndex.start();
 
@@ -388,16 +383,23 @@ public class Indexing {
 
         return new ArrayList<>(globalHash.entrySet());
     }
-
+    //latch??
     public static void loadIndex(String indexDirPath,
                                  ConcurrentHashMap<String, HashSet<Location>> globalLoadIndexInvertedMap,
                                  Map<Integer, String> globalLoadFiles,
                                  Map<Location, String> globalLoadIndexFilesLines) {
 
+        CountDownLatch latchOp2 = new CountDownLatch(1);
+        CountDownLatch latchOp3 = new CountDownLatch(1);
+
+
+
         // Es carrega el index files id i el files lines a memoria
 
         LoadIndexConc loadFilesIds = new LoadIndexConc(2, indexDirPath);
+        loadFilesIds.setLatch(latchOp2);
         LoadIndexConc loadFilesLines = new LoadIndexConc(3, indexDirPath);
+        loadFilesIds.setLatch(latchOp3);
 
         Thread threadFilesIds = new Thread(loadFilesIds);
         threadFilesIds.start();
@@ -405,14 +407,15 @@ public class Indexing {
         Thread threadFilesLines = new Thread(loadFilesLines);
         threadFilesLines.start();
 
-        //Thread threadFilesIds = Thread.startVirtualThread(loadFilesIds);
-        //Thread threadFilesLines = Thread.startVirtualThread(loadFilesLines);
+;
 
         loadInvertedIndex(globalLoadIndexInvertedMap, indexDirPath);
 
         try {
-            threadFilesIds.join();
-            threadFilesLines.join();
+            ///threadFilesIds.join();
+            //threadFilesLines.join();
+            latchOp2.await();
+            latchOp3.await();
 
         } catch (Exception e) {
             System.out.println("Error en el salvat del invertedIndex Op.1 Op.3 Op.4");
@@ -426,12 +429,14 @@ public class Indexing {
 
     }
 
+    //latch???
     public static void loadInvertedIndex(ConcurrentHashMap<String, HashSet<Location>> globalLoadIndexInvertedMap,
                                          String indexDirPath) {
 
         File folder = new File(indexDirPath);
         File[] listOfFiles = folder.listFiles((d, name) -> name.startsWith(DIndexFilePrefix));
         Thread[] threads = new Thread[listOfFiles.length];
+        latch2 = new CountDownLatch(listOfFiles.length);
         LoadIndexConc[] loadInvertedIndexArray = new LoadIndexConc[listOfFiles.length];
         int i = 0;
 
@@ -442,9 +447,9 @@ public class Indexing {
                 LoadIndexConc loadInvertedIndex = new LoadIndexConc(1, file);
                 
                 Thread threadLoadInvertedIndex = new Thread(loadInvertedIndex);
-                //Thread threadLoadInvertedIndex = Thread.startVirtualThread(loadInvertedIndex);
                 threads[i] = threadLoadInvertedIndex;
                 threadLoadInvertedIndex.start();
+                loadInvertedIndex.setLatch(latch2);
                 
                 loadInvertedIndexArray[i] = loadInvertedIndex;
                 i++;
